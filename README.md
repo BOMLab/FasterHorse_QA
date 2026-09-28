@@ -1,6 +1,6 @@
 # Faster Horse volunteer checklists
 
-Copy the contents of `QA/` into the new repository root, with `index.html` at the top level. Do not copy `Website/` or `Services/`.
+This repository is the standalone QA website. `index.html` at the repository root includes everything needed to run it.
 
 **Short is the default: 8 checks per game mode, 2 website checks.** The final game check asks about other bugs, with examples such as invisible obstacles, wall driving and falling through the road.
 
@@ -13,6 +13,19 @@ Every field is optional in both versions. Volunteers can skip checks and downloa
 `index.html` is self-contained, including both checklists and the Faster Horse logo. Send the file for desktop use or host it as a static webpage. No backend is needed. This task does not publish a site.
 
 The QA page has no API, polling, analytics, remote-font or remote-image requests. Its browser policy blocks script connections. Hosting serves the initial HTML file; answers, screenshot attachments, imports and exports remain local. The actual game's normal online requests are separate.
+
+### GitHub Pages
+
+1. Push the repository, including `index.html` and `.nojekyll`, to `main`.
+2. In the repository's **Settings → Pages → Build and deployment**, select **Deploy from a branch**.
+3. Select **main** and **/ (root)**, then **Save**.
+4. Wait for the Pages deployment to finish, then open `https://bomlab.github.io/FasterHorse_QA/` (unless a custom domain is configured).
+
+No npm install, server, or custom Actions workflow is needed. `.nojekyll` skips Jekyll processing. The page works under the repository subpath because its scripts, styles, logo and checklist data are embedded; it has no client-side routes requiring a 404 fallback. GitHub Pages does not run `build-checklist.py`: after CSV edits, run it locally and commit the updated `index.html` as well.
+
+Saved answers belong to the browser and origin. Local preview, GitHub Pages and a custom domain have separate storage; use report download/import to move progress. Reports are downloaded locally, not uploaded to GitHub.
+
+See [GitHub's publishing-source instructions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
 ## Progress and reports
 
@@ -45,3 +58,15 @@ python3 -m http.server 4186 --bind 127.0.0.1
 ```
 
 Browser checks: run `node tests/browser-check.mjs` with Node 22+, the preview above and a disposable Chrome debugging session on port 9236. `QA_URL` and `CHROME_DEBUG_URL` override those addresses. Checks cover optional inputs/navigation, bug answers, both checklist versions, isolated progress, report export/import, screenshots, responsive layouts, and zero API traffic. They do not play the game or submit scores.
+
+To verify the GitHub Pages repository subpath, serve the parent directory in one terminal:
+
+```sh
+python3 -m http.server 4187 --bind 127.0.0.1 --directory ..
+```
+
+Then run the same checks against the nested URL (assuming this checkout is named `FasterHorse_QA`):
+
+```sh
+QA_URL=http://127.0.0.1:4187/FasterHorse_QA/ node tests/browser-check.mjs
+```

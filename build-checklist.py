@@ -9,6 +9,17 @@ root = Path(__file__).resolve().parent
 solo_only = set('GAME-001 GAME-011 GAME-016 NAME-001 NAME-002 NAME-003 RESULT-001 RESULT-002 RESULT-003 RESULT-004 RESULT-006 LB-001 LB-002 LB-003 LB-016 NET-003 NET-004 NET-008 DEVICE-001 DEVICE-002 DEVICE-003 DEVICE-004 DEVICE-005'.split())
 multiplayer_only = set('NAME-004 NAME-005 NAME-006 NAME-007 NAME-008 NAME-009 NAME-010 NAME-011 RESULT-007 LB-008 LB-009 LB-010 LB-012 NET-005 NET-006'.split())
 dates = set()
+def split_steps(text):
+    # Split only at the next step number; "page 1." and "controller 1."
+    # inside instructions are not new steps.
+    steps, start, expected = [], 0, 2
+    for boundary in re.finditer(r'\s+(\d+)\.(?=\s)', text):
+        if int(boundary.group(1)) == expected:
+            steps.append(text[start:boundary.start()])
+            start = boundary.start(1)
+            expected += 1
+    return steps + [text[start:]]
+
 def catalogue(filename, extensive=False):
     with (root / filename).open(encoding='utf-8-sig', newline='') as f:
         rows = list(csv.DictReader(f))
@@ -31,7 +42,7 @@ def catalogue(filename, extensive=False):
                     'SHARE': 'Highlights', 'WEB': 'Leaderboard website', 'BUG': 'Other bugs'}
         tests.append(dict(id=id, section=sections[id.split('-')[0]], category=r['Category'], title=r['Feature'].removeprefix('[REGRESSION] '),
                           regression=r['Feature'].startswith('[REGRESSION]'), priority=r['Priority'],
-                          pre=r['Preconditions'], steps=re.split(r'\s+(?=\d+\. )', r['Steps']),
+                          pre=r['Preconditions'], steps=split_steps(r['Steps']),
                           expected=r['Expected Result'], modes=modes))
     assert len({t['id'] for t in tests}) == len(tests), 'Test IDs must be unique within a checklist'
     return tests
